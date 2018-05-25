@@ -40,7 +40,7 @@ class AudioInput(Throughput):
     def activate(self):
         self.open = True
         while True:
-            sleep(0.00001)
+            sleep(1/(RATE*10))
             if self.open:
                 self.buffer.append(self.stream.read(CHUNK))
                 if len(self.buffer) > 500:
