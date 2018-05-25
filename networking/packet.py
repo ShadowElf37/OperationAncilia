@@ -67,15 +67,35 @@ class ICMPHeader:
 
 
 class TCPHeader:
+    def __init__(self, src_port, dst_port, seq=randint(0, 0xFFFF), NS=0, CWR=0, ECE=0, URG=0, ACK=0, PSH=0, RST=0, SYN=0, FIN=0, ACK_NUM=0, URG_NUM=0):
+        # 16 16 32 32 4+3+1 8 16 16 16
+        self.header = [
+            src_port,
+            dst_port,
+            seq,
+            ACK_NUM,  # ACK number
+            Bin(5, 4) + Bin(Bin(0, 3) + Bin(NS, 1), 4),  # Data offset # Reserved by protocol # Flag
+            int(''.join([str(n) for n in [CWR,ECE,URG,ACK,PSH,RST,SYN,FIN]]), 2),  # More flags
+            socket.htons(5840),  # Window size??? Apparently this is max value
+            0,  # Checksum
+            URG_NUM
+        ]
+
+    def compile(self):
+        return pack('!HHLLBBHHH', *self.header)
+
+
+class ARPHeader:
     def __init__(self):
         ...
 
 
 if __name__ == '__main__':
-    print('Creating ICMP packet...')
+    print('Creating TCP packet...')
     p = Packet('192.168.1.173')
-    #p.add_header(IPHeader('192.168.1.164', '192.168.1.173', protocol=protocols.ICMP))
+    p.add_header(IPHeader('192.168.1.164', '192.168.1.173', protocol=protocols.ICMP))
     p.add_header(ICMPHeader(id=randint(1, 0xFFFF), seq=1))
+    #p.add_header(TCPHeader(80, 80, SYN=1))
     p.set_payload('hello world')
     print(p.compile())
     print('Initializing socket...')
