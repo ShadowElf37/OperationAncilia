@@ -1,7 +1,7 @@
 import socket
 from random import randint
 from struct import pack
-from data import Bin
+from data import *
 import protocols
 
 ENC = 'UTF-8'
@@ -37,15 +37,25 @@ class IPHeader:
         self.header = [
             Bin(4, 4)+Bin(header_length, 4),  # IPv4
             Bin(0, 6)+Bin(0, 2),  # Type of Service # Something something congestion
-            0,  # Total header length; apparently the kernel fills this
+            0,  # Total packet length
             randint(0, 0xFFFF),  # 16-bit ID
             Bin(0, 4)+Bin(0, 12),  # Flags # Fragment offset?
             255,  # TTL in hops
             protocol,
-            0,  # Checksum; apparently the kernel fills this
+            0,  # Checksum
             socket.inet_aton(source),
             socket.inet_aton(dest)
         ]
+
+        h = self.header[:-2] + [int(''.join([str(bin(ord(c)))[2:] for c in str(socket.inet_aton(source))]), 2),
+            int(''.join([str(bin(ord(c)))[2:] for c in str(socket.inet_aton(dest))]), 2)]
+
+        b = str(bin(sum(list(map(lambda x: int(x, 16), cut(''.join([str(hex(i))[2:] for i in h]), 4))))))[2:]
+        print(b)
+        print(cut(b, 4))
+        b = [int(i, 2) for i in cut(b, 4)]
+        print(b)
+
 
     def compile(self):
         return pack('!BBHHHBBH4s4s', *self.header)
@@ -57,7 +67,7 @@ class ICMPHeader:
         self.header = [
             type,  # Type; echo is 0
             subtype,  # Subtype
-            0,  # Checksum; apparently the kernel fills this
+            0,  # Checksum
             id,
             seq
         ]

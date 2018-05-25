@@ -17,3 +17,18 @@ class Bin:
 
     def __repr__(self):
         return 'Bin with value ' + str(self.value)
+
+def cut(s, interval):
+    t = []
+    i = 1
+    d = ''
+    for c in s:
+        d += c
+        if i == interval:
+            t.append(d)
+            d = ''
+            i = 1
+            continue
+        i += 1
+
+    return t
