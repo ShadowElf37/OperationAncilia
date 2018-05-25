@@ -9,6 +9,8 @@ RATE = 44100
 CHUNK = 1024
 AUDIO = pyaudio.PyAudio()
 
+REFRESH = 0.0000001
+
 
 class Throughput:
     def __init__(self):
@@ -40,14 +42,16 @@ class AudioInput(Throughput):
     def activate(self):
         self.open = True
         while True:
-            sleep(1/(RATE*10))
+            sleep(REFRESH)
             if self.open:
                 self.buffer.append(self.stream.read(CHUNK))
                 if len(self.buffer) > 500:
                     self.buffer.pop(0)
 
     def read(self):
-        while not self.buffer: sleep(0.00001)
+        while not self.buffer:
+            sleep(REFRESH)
+            #return ''
         return self.buffer.pop(0)
 
 
@@ -62,7 +66,7 @@ class AudioOutput(Throughput):
     def activate(self):
         self.open = True
         while True:
-            sleep(0.00001)
+            sleep(REFRESH)
             if self.open:
                 try:
                     self.stream.write(self.buffer.pop(0))
@@ -82,9 +86,15 @@ class AudioDevice:
         self.othread = None
 
     def read(self):
+        if not self.inp.open:
+            print('Stream closed.')
+            return ''
         return self.inp.read()
 
     def write(self, data):
+        if not self.out.open:
+            print('Stream closed.')
+            return ''
         self.out.write(data)
 
     def activate(self):
@@ -108,3 +118,10 @@ class AudioDevice:
         self.inp.close()
         self.ithread = None
         self.othread = None
+
+
+if __name__ == '__main__':
+    d = AudioDevice()
+    d.activate()
+    while True:
+        d.write(d.read())
