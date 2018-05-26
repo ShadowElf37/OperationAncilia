@@ -16,9 +16,19 @@ class Packet:
 
     def add_header(self, a):
         self.headers.append(a)
+        self.ip_len_recalc()
 
     def set_payload(self, s):
         self.payload = s
+        self.ip_len_recalc()
+
+    def ip_len_recalc(self):
+        if isinstance(self.headers[0], IPHeader):
+            t = 0
+            for h in self.headers:
+                t += len(h.compile())
+            t += len(self.payload)
+            self.headers[0].header[3] = t
 
     def compile(self):
         return b''.join([p.compile() for p in self.headers]) + self.payload.encode(ENC)
@@ -30,7 +40,7 @@ class Packet:
         return self.dest
 
 class IPHeader:
-    def __init__(self, source, dest, header_length=5, protocol=socket.IPPROTO_TCP):
+    def __init__(self, source, dest, header_length=5, ttl=255, protocol=socket.IPPROTO_TCP):
         # 4 4 6 2 16 16 4 12 8 8 16 32 32
         self.src = source
         self.dst = dest
@@ -40,7 +50,7 @@ class IPHeader:
             65535,  # Total packet length
             randint(0, 0xFFFF),  # 16-bit ID
             Bin(0, 4)+Bin(0, 12),  # Flags # Fragment offset?
-            255,  # TTL in hops
+            ttl,  # TTL in hops
             protocol,
             0,  # Checksum
             socket.inet_aton(source),
@@ -66,7 +76,7 @@ class IPHeader:
             else:
                 n += '1'
         b = int(n, 2)
-        print(5, hex(b))
+        #print(5, hex(b))
         self.header[-3] = b
 
 
@@ -78,7 +88,7 @@ class ICMPHeader:
     def __init__(self, type=0, subtype=0, seq=randint(0, 0xFFFF), id=randint(0, 0xFFFF)):
         # 8 8 16 32
         self.header = [
-            type,  # Type; echo is 0
+            type,  # Type; echo is 0 or 8
             subtype,  # Subtype
             0,  # Checksum
             id,
@@ -114,17 +124,22 @@ class ARPHeader:
 
 
 if __name__ == '__main__':
-    print('Creating TCP packet...')
-    p = Packet('192.168.1.173')
-    p.add_header(IPHeader('192.168.1.164', '192.168.1.173', protocol=protocols.ICMP))
-    p.add_header(ICMPHeader(id=randint(1, 0xFFFF), seq=1))
-    #p.add_header(TCPHeader(80, 80, SYN=1))
-    p.set_payload('hello world')
-    print(p.compile())
     print('Initializing socket...')
     s = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_ICMP)
-    print('Sending...')
-    s.sendto(p.compile(), (p.get_dst(), 0))
-    print('Packet sent, awaiting response...')
-    print('Response:', s.recvfrom(1024))
+    s.setsockopt(socket.IPPROTO_IP, socket.IP_HDRINCL, 1)
+    src = '192.168.1.164'
+    dst = '192.168.1.81'
+    print('Done.')
+
+    for i in range(1):
+        p = Packet(dst)
+        p.add_header(IPHeader(src, dst, protocol=protocols.ICMP))
+        p.add_header(ICMPHeader(type=8, seq=1))
+        #p.add_header(TCPHeader(80, 80, SYN=1))
+        p.set_payload('This packet has a spoofed IP address lol.')
+        print(p.compile())
+        s.sendto(p.compile(), (dst, 0))
+        print('ICMP Echo request sent.')
+        print('Response:', s.recvfrom(1024))
+
     print('Operation complete.')
