@@ -22,6 +22,7 @@ def cut(s, interval):
     t = []
     i = 1
     d = ''
+    s = reversed(s)
     for c in s:
         d += c
         if i == interval:
@@ -30,5 +31,8 @@ def cut(s, interval):
             i = 1
             continue
         i += 1
+    if d:
+        t.append(d)
 
+    t = list(reversed([''.join(list(reversed(i))) for i in t]))
     return t

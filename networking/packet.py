@@ -67,11 +67,10 @@ class IPHeader:
         # Convert IP addresses to integers
         h = self.header[:-2] + [int(''.join(['0'*(8-len(bin(c)[2:])) + bin(c)[2:] for c in socket.inet_aton(self.src)]), 2),
                                 int(''.join(['0'*(8-len(bin(c)[2:])) + bin(c)[2:] for c in socket.inet_aton(self.dst)]), 2)]
-        print([hex(i)[2:] for i in h])
 
         # Grabs every header item and converts to hex; adds padding 0's too
         c = ''.join([('0' * (data_sizes[i] - len(hex(h[i])[2:])) + hex(h[i])[2:]) for i in range(len(h))])
-        print(cut(c, 4))
+        print(0, cut(c, 4))
 
         # Splits the header into 16-bit words, sums them, and converts it to binary
         b = bin(sum(list(map(lambda x: int(x, 16), cut(c, 4)))))[2:]
@@ -79,14 +78,14 @@ class IPHeader:
 
         # Cuts it again into 16-bit words
         b = cut(b, 4)
-        # print(2, b)
+        print(2, b)
 
         # Continually adds carry bits
         while len(b) > 4:
-            b = bin(int(b[0], 2) + int(''.join(b[-4:]), 2))[2:]
+            b = bin(int(b[0], 2) + int(''.join(b[1:]), 2))[2:]
             # print(3, b)
             b = cut('0' * (len(b) % 4) + b, 4)
-        # print(4, int(''.join(b), 2))
+        print(4, int(''.join(b), 2))
 
         # 1's complement
         n = ''
@@ -95,7 +94,7 @@ class IPHeader:
                 n += '0'
             else:
                 n += '1'
-                
+
         # Convert to int for packing
         b = int(n, 2)
         print(5, b)
@@ -160,7 +159,7 @@ if __name__ == '__main__':
         p.set_payload('This packet has a spoofed IP address lol.')
         print(p.compile())
         #print(p.headers[0].header)
-        s.sendto(p.compile(), ('192.168.1.1', 0))
+        s.sendto(p.compile(), ('192.168.1.81', 0))
         print('ICMP Echo request sent.')
         print('Response:', s.recvfrom(1024))
 
