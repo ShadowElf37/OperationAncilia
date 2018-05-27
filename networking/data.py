@@ -1,8 +1,11 @@
+import socket
+from time import sleep
+
 class Bin:
     def __init__(self, value, length=8):
         self.value = value
         self.length = length
-        self.value <<= length-(len(bin(self.value))-2)
+        self.value = int('0' * (len(bin(self.value))-2) + bin(self.value)[2:], 2)
 
     def __add__(self, other):
         if not isinstance(other, Bin):
@@ -36,3 +39,27 @@ def cut(s, interval):
 
     t = list(reversed([''.join(list(reversed(i))) for i in t]))
     return t
+
+def hexpad(ints, sizes):
+    return ''.join([('0' * (sizes[i] - len(hex(ints[i])[2:])) + hex(ints[i])[2:]) for i in range(len(ints))])
+
+def binsum(hex):
+    return bin(sum(list(map(lambda x: int(x, 16), hex))))[2:]
+
+def carry(b, l=4):
+    while len(b) > l:
+        b = bin(int(b[0], 2) + int(''.join(b[1:]), 2))[2:]
+        b = '0' * (len(b) % 4) + b
+        b = cut('0' * (len(b) % 4) + b, 4)
+
+    return b
+
+def onecomplement(string):
+    n = ''
+    for c in string:
+        if c == '1':
+            n += '0'
+        else:
+            n += '1'
+
+    return n
