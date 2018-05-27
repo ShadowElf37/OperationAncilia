@@ -24,11 +24,12 @@ class Packet:
 
     def ip_len_recalc(self):
         if isinstance(self.headers[0], IPHeader):
+            print(self.headers[0].header)
             t = 0
             for h in self.headers:
                 t += len(h.compile())
             t += len(self.payload)
-            self.headers[0].header[3] = t
+            self.headers[0].header[2] = t
 
     def compile(self):
         return b''.join([p.compile() for p in self.headers]) + self.payload.encode(ENC)
@@ -45,29 +46,34 @@ class IPHeader:
         self.src = source
         self.dst = dest
         self.header = [
-            Bin(4, 4)+Bin(header_length, 4),  # IPv4
-            Bin(0, 6)+Bin(0, 2),  # Type of Service # Something something congestion
-            65535,  # Total packet length
-            randint(0, 0xFFFF),  # 16-bit ID
-            Bin(0, 4)+Bin(0, 12),  # Flags # Fragment offset?
-            ttl,  # TTL in hops
-            protocol,
-            0,  # Checksum
-            socket.inet_aton(source),
-            socket.inet_aton(dest)
+            Bin(4, 4)+Bin(header_length, 4),  # IPv4 (8)
+            Bin(0, 6)+Bin(0, 2),  # Type of Service # Something something congestion (8)
+            0,  # Total packet length (16)
+            randint(0, 0xFFFF),  # 16-bit ID (16)
+            Bin(0, 4)+Bin(0, 12),  # Flags # Fragment offset? (16)
+            ttl,  # TTL in hops (8)
+            protocol, # (8)
+            0,  # Checksum (16)
+            socket.inet_aton(source),  # (32)
+            socket.inet_aton(dest)  # (32)
         ]
 
+    def compile(self):
         # Find checksum
-        h = self.header[:-2] + [int(''.join([str(bin(ord(c)))[2:] for c in str(socket.inet_aton(source))]), 2),
-            int(''.join([str(bin(ord(c)))[2:] for c in str(socket.inet_aton(dest))]), 2)]
-        b = str(bin(sum(list(map(lambda x: int(x, 16), cut(''.join([str(hex(i))[2:] for i in h]), 4))))))[2:]
-        # print(1, b)
+        data_sizes = [int(x / 4) for x in [8, 8, 16, 16, 16, 8, 8, 16, 32, 32]]
+        h = self.header[:-2] + [int(''.join(['0'*(8-len(bin(c)[2:])) + bin(c)[2:] for c in socket.inet_aton(self.src)]), 2),
+                                int(''.join(['0'*(8-len(bin(c)[2:])) + bin(c)[2:] for c in socket.inet_aton(self.dst)]), 2)]
+        print([hex(i)[2:] for i in h])
+        c = ''.join([('0' * (data_sizes[i] - len(hex(h[i])[2:])) + hex(h[i])[2:]) for i in range(len(h))])
+        print(cut(c, 4))
+        b = bin(sum(list(map(lambda x: int(x, 16), cut(c, 4)))))[2:]
+        print(1, b)
         b = cut(b, 4)
         # print(2, b)
         while len(b) > 4:
             b = str(bin(int(b[0], 2) + int(''.join(b[-4:]), 2)))[2:]
             # print(3, b)
-            b = cut('0'*(len(b)%4) + b, 4)
+            b = cut('0' * (len(b) % 4) + b, 4)
         # print(4, int(''.join(b), 2))
         n = ''
         for c in ''.join(b):
@@ -76,11 +82,9 @@ class IPHeader:
             else:
                 n += '1'
         b = int(n, 2)
-        #print(5, hex(b))
+        # print(5, b)
         self.header[-3] = b
 
-
-    def compile(self):
         return pack('!BBHHHBBH4s4s', *self.header)
 
 
@@ -138,7 +142,8 @@ if __name__ == '__main__':
         #p.add_header(TCPHeader(80, 80, SYN=1))
         p.set_payload('This packet has a spoofed IP address lol.')
         print(p.compile())
-        s.sendto(p.compile(), (dst, 0))
+        #print(p.headers[0].header)
+        s.sendto(p.compile(), ('192.168.1.1', 0))
         print('ICMP Echo request sent.')
         print('Response:', s.recvfrom(1024))
 
