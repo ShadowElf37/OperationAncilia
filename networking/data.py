@@ -47,10 +47,20 @@ def binsum(hex):
     return bin(sum(list(map(lambda x: int(x, 16), hex))))[2:]
 
 def carry(b, l=4):
+    i = 0
     while len(b) > l:
+        if b[0] == '0000':
+            b = b[1:]
+            continue
+        i += 1
+        a = i > 50
+        if a: print(b)
         b = bin(int(b[0], 2) + int(''.join(b[1:]), 2))[2:]
+        if a: print(b)
         b = '0' * (len(b) % 4) + b
+        if a: print(b)
         b = cut('0' * (len(b) % 4) + b, 4)
+        if a: print(b)
 
     return b
 

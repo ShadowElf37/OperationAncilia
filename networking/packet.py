@@ -147,7 +147,6 @@ class ICMPHeader:
             if i % 2 == 0:
                 l.append(t)
                 t = ''
-        if debug: print('@', l)
         chk += l
         if debug: print(2, chk)
 
@@ -167,7 +166,7 @@ class ICMPHeader:
         b = int(n, 2)
         if debug: print(5, n)
         self.header[2] = b
-        
+
         return pack('!BBHHH', *self.header)
 
 
