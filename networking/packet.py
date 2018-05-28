@@ -80,7 +80,6 @@ class IPHeader:
         b = checksum(c)
 
         # Convert to int for packing
-        b = int(n, 2)
         if debug: print(5, b)
         self.header[-3] = b
 
@@ -127,9 +126,8 @@ class ICMPHeader:
         n = checksum(chk)
 
         # Pack
-        b = int(n, 2)
         if debug: print(5, n)
-        self.header[2] = b
+        self.header[2] = n
         return pack('!BBHHH', *self.header)
 
 
@@ -170,10 +168,10 @@ if __name__ == '__main__':
     print('Initializing socket...')
     s = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_ICMP)
     s.setsockopt(socket.IPPROTO_IP, socket.IP_HDRINCL, 1)
-    src = '192.168.1.81'
-    dst = '192.168.1.164'
+    src = '192.168.1.164'
+    dst = '192.168.1.81'
     payload = 'test'
-    print('Socket ready. Creating packets...')
+    print('Socket ready. Entering loop...')
 
     for i in range(3):
         p = Packet(dst)
@@ -183,8 +181,8 @@ if __name__ == '__main__':
         p.set_payload(payload)
         #print(p.compile())
         # print(p.headers[0].header)
-        s.sendto(p.compile(), ('192.168.1.1', 0))
-        print('ICMP Echo request sent.')
+        s.sendto(p.compile(), ('192.168.1.177', 0))
+        print('ICMP Echo request sent!')
         print('Response:', s.recvfrom(1024))
 
     print('Operation complete.')
