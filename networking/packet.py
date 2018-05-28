@@ -59,10 +59,11 @@ class IPHeader:
         ]
 
     def compile(self):
+        self.header[-3] = 0
         debug = False
         # Find checksum
         # Reference table for adding padding 0's
-        data_sizes = [int(x / 4) for x in [8, 8, 16, 16, 16, 8, 8, 16, 32, 32]]
+        data_sizes = [8, 8, 16, 16, 16, 8, 8, 16, 32, 32]
 
         # Convert IP addresses to integers
         h = self.header[:-2] + [
@@ -70,8 +71,8 @@ class IPHeader:
             int(''.join(['0' * (8 - len(bin(c)[2:])) + bin(c)[2:] for c in socket.inet_aton(self.dst)]), 2)]
 
         # Grabs every header item and converts to hex; adds padding 0's too
-        c = hexpad(h, data_sizes)
-        c = cut(c, 4)
+        c = binpad(h, data_sizes)
+        c = cut(c, 16)
         if debug: print(0, c)
 
         # Splits the header into 16-bit words, sums them, and converts it to binary
@@ -128,12 +129,13 @@ class ICMPHeader:
         self.payload = payload
 
     def compile(self):
-        debug = True
+        self.header[2] = 0
+        debug = False
         # Padding reference table
-        data_sizes = [int(x / 4) for x in [8, 8, 16, 16, 16]]
+        data_sizes = [8, 8, 16, 16, 16]
         # Hexify and pad
-        chk = hexpad(self.header, data_sizes)
-        chk = cut(chk, 4)
+        chk = binpad(self.header, data_sizes)
+        chk = cut(chk, 16)
 
         # Add payload
         if debug: print(1, chk)
@@ -142,7 +144,7 @@ class ICMPHeader:
         t = ''
         for c in self.payload:
             i += 1
-            a = hex(ord(c))[2:]
+            a = bin(ord(c))[2:]
             t += '0' * (len(a)%2) + a
             if i % 2 == 0:
                 l.append(t)
@@ -166,7 +168,6 @@ class ICMPHeader:
         b = int(n, 2)
         if debug: print(5, n)
         self.header[2] = b
-
         return pack('!BBHHH', *self.header)
 
 
@@ -200,18 +201,18 @@ if __name__ == '__main__':
     s.setsockopt(socket.IPPROTO_IP, socket.IP_HDRINCL, 1)
     src = '192.168.1.164'
     dst = '192.168.1.81'
-    payload = 'This packet has a spoofed IP address lol.'
-    print('Done.')
+    payload = 'test'
+    print('Socket ready. Creating packets...')
 
-    for i in range(1):
+    for i in range(5):
         p = Packet(dst)
         p.add_header(IPHeader(src, dst, protocol=protocols.ICMP))
-        p.add_header(ICMPHeader(payload, type=8, seq=1))
+        p.add_header(ICMPHeader(payload, type=8, seq=i))
         #p.add_header(TCPHeader(80, 80, SYN=1))
         p.set_payload(payload)
-        print(p.compile())
+        #print(p.compile())
         # print(p.headers[0].header)
-        s.sendto(p.compile(), ('192.168.1.81', 0))
+        s.sendto(p.compile(), (dst, 0))
         print('ICMP Echo request sent.')
         print('Response:', s.recvfrom(1024))
 

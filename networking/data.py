@@ -40,11 +40,11 @@ def cut(s, interval):
     t = list(reversed([''.join(list(reversed(i))) for i in t]))
     return t
 
-def hexpad(ints, sizes):
-    return ''.join([('0' * (sizes[i] - len(hex(ints[i])[2:])) + hex(ints[i])[2:]) for i in range(len(ints))])
+def binpad(ints, sizes):
+    return ''.join([('0' * (sizes[i] - len(bin(ints[i])[2:])) + bin(ints[i])[2:]) for i in range(len(ints))])
 
-def binsum(hex):
-    return bin(sum(list(map(lambda x: int(x, 16), hex))))[2:]
+def binsum(nums):
+    return bin(sum(list(map(lambda x: int(x, 2), nums))))[2:]
 
 def carry(b, l=4):
     i = 0
