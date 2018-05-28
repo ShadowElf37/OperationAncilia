@@ -40,6 +40,7 @@ class Packet:
     def get_dst(self):
         return self.dest
 
+
 class IPHeader:
     def __init__(self, source, dest, header_length=5, ttl=255, protocol=socket.IPPROTO_TCP):
         # 4 4 6 2 16 16 4 12 8 8 16 32 32
@@ -76,37 +77,7 @@ class IPHeader:
         if debug: print(0, c)
 
         # Splits the header into 16-bit words, sums them, and converts it to binary
-        b = binsum(c)
-        if debug: print(1, b)
-
-        # Cuts it again into 16-bit words
-        b = cut(b, 4)
-        if debug: print(2, b)
-
-        # Continually adds carry bits
-        i = 0
-        while len(b) > 4:
-            if b[0] == '0000':
-                b = b[1:]
-                continue
-            i += 1
-            a = i > 50
-            if a: print(3.1, b)
-            b = bin(int(b[0], 2) + int(''.join(b[1:]), 2))[2:]
-            if a: print(3.2, b)
-            b = '0' * (len(b) % 4) + b
-            if a: print(3.3, b)
-            b = cut('0' * (len(b) % 4) + b, 4)
-            if a: print(3.4, b)
-        if debug: print(4, int(''.join(b), 2))
-
-        # 1's complement
-        n = ''
-        for c in ''.join(b):
-            if c == '1':
-                n += '0'
-            else:
-                n += '1'
+        b = checksum(c)
 
         # Convert to int for packing
         b = int(n, 2)
@@ -153,16 +124,7 @@ class ICMPHeader:
         if debug: print(2, chk)
 
         # Splits, sums, returns binary
-        b = binsum(chk)
-        b = cut(b, 4)
-
-        # Carry
-        if debug: print(3, b)
-        b = carry(b)
-
-        # Complement
-        if debug: print(4, ''.join(b))
-        n = onecomplement(''.join(b))
+        n = checksum(chk)
 
         # Pack
         b = int(n, 2)
@@ -195,16 +157,25 @@ class ARPHeader:
         ...
 
 
+class UDPHeader:
+    def __init__(self):
+        ...
+
+
+class NATHeader:
+    def __init__(self):
+        ...
+
 if __name__ == '__main__':
     print('Initializing socket...')
     s = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_ICMP)
     s.setsockopt(socket.IPPROTO_IP, socket.IP_HDRINCL, 1)
-    src = '192.168.1.164'
-    dst = '192.168.1.81'
+    src = '192.168.1.81'
+    dst = '192.168.1.164'
     payload = 'test'
     print('Socket ready. Creating packets...')
 
-    for i in range(5):
+    for i in range(3):
         p = Packet(dst)
         p.add_header(IPHeader(src, dst, protocol=protocols.ICMP))
         p.add_header(ICMPHeader(payload, type=8, seq=i))
@@ -212,7 +183,7 @@ if __name__ == '__main__':
         p.set_payload(payload)
         #print(p.compile())
         # print(p.headers[0].header)
-        s.sendto(p.compile(), (dst, 0))
+        s.sendto(p.compile(), ('192.168.1.1', 0))
         print('ICMP Echo request sent.')
         print('Response:', s.recvfrom(1024))
 

@@ -73,3 +73,6 @@ def onecomplement(string):
             n += '1'
 
     return n
+
+def checksum(bin16list):
+    return int(onecomplement(''.join(carry(cut(binsum(bin16list), 4)))), 2)
