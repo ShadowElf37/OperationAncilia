@@ -1,6 +1,9 @@
 import socket
 from time import sleep
 
+ENC = 'UTF-8'
+
+
 class Bin:
     def __init__(self, value, length=8):
         self.value = value
