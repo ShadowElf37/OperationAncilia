@@ -42,20 +42,26 @@ class Packet:
 
 if __name__ == '__main__':
     print('Initializing socket...')
-    s = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_RAW)
-    #s.setsockopt(socket.IPPROTO_IP, socket.IP_HDRINCL, 1)
-    src = '192.168.1.164'
-    dst = '192.168.1.81'
-    payload = 'test'
+    s = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.AF_INET)
+    s.setsockopt(socket.IPPROTO_IP, socket.IP_HDRINCL, 1)
+    s.bind(('eth0', 0))
+
     print('Socket ready. Entering loop...')
+    src = '192.168.1.164'
+    smac = 'f8:b1:56:fe:74:1e'
+    dst = '192.168.1.81'
+    dmac = '7c:d1:c3:71:1c:86'
+    payload = 'test'
 
     p = Packet(dst)
-    p.l3 = level3.IPHeader(src, dst, protocol=protocols.TCP)
-    # p.l4 = level4.ICMPHeader(payload, type=8, seq=1)
-    p.l4 = level4.TCPHeader(payload, src, dst, 80, 80, SYN=1)
+    p.l2 = level2.MACHeader(smac, dmac, protocols.E_IPv4)
+    p.l3 = level3.IPHeader(src, dst, protocol=protocols.ICMP)
+    p.l4 = level4.ICMPHeader(payload, type=8, seq=1)
+    # p.l4 = level4.TCPHeader(payload, src, dst, 80, 80, SYN=1)
     p.set_datagram(payload)
+
     print(p.compile())
-    s.sendto(p.compile(), ('192.168.1.1', 0))
+    s.send(p.compile())
     print('TCP packet sent.')
     print('Response:', s.recvfrom(1024))
 
