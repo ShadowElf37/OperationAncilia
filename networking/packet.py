@@ -42,7 +42,7 @@ class Packet:
 
 if __name__ == '__main__':
     print('Initializing socket...')
-    s = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.AF_INET)
+    s = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_RAW)
     s.setsockopt(socket.IPPROTO_IP, socket.IP_HDRINCL, 1)
     s.bind(('eth0', 0))
 
@@ -54,7 +54,7 @@ if __name__ == '__main__':
     payload = 'test'
 
     p = Packet(dst)
-    p.l2 = level2.MACHeader(smac, dmac, protocols.E_IPv4)
+    # p.l2 = level2.MACHeader(smac, dmac, protocols.E_IPv4)
     p.l3 = level3.IPHeader(src, dst, protocol=protocols.ICMP)
     p.l4 = level4.ICMPHeader(payload, type=8, seq=1)
     # p.l4 = level4.TCPHeader(payload, src, dst, 80, 80, SYN=1)
