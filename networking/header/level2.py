@@ -16,7 +16,7 @@ class MACHeader:
 
 
 class ARPHeader:
-    def __init__(self, src_ip, src_maddr, dst_ip, ethertype, dst_maddr=0, operation=1):
+    def __init__(self, src_ip, src_maddr, dst_ip, ethertype, dst_maddr=None, operation=1):
         self.header = [
             1,
             ethertype,
@@ -25,7 +25,7 @@ class ARPHeader:
             operation,  # Can be 1 or 2; req or reply
             *[int(c, 16) for c in src_maddr.split(':')],
             socket.inet_aton(src_ip),
-            *([int(c, 16) for c in dst_maddr.split(':')] if dst_maddr != 0 else [0]*6),
+            *([int(c, 16) for c in dst_maddr.split(':')] if dst_maddr != None else [0]*6),
             socket.inet_aton(dst_ip)
         ]
 
