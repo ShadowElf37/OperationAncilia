@@ -42,28 +42,29 @@ class Packet:
 
 if __name__ == '__main__':
     print('Initializing socket...')
-    # s = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_RAW)
-    s = socket.socket(socket.AF_PACKET, socket.SOCK_RAW)
-    # s.setsockopt(socket.IPPROTO_IP, socket.IP_HDRINCL, 1)
-    s.bind(('eth0', 0))
+    s = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_UDP)
+    # s = socket.socket(socket.AF_PACKET, socket.SOCK_RAW)
+    s.setsockopt(socket.IPPROTO_IP, socket.IP_HDRINCL, 1)
+    # s.bind(('eth0', 0))
 
-    print('Socket ready. Entering loop...')
-    src = '192.168.1.251'
+    print('Socket ready. Sending packet...')
+    src = '192.168.1.164'
+    dst = '192.168.1.164'
     smac = 'b0:65:bd:45:c9:c8'
-    dst = '192.168.1.81'
     dmac = '7c:d1:c3:71:1c:86'
     payload = 'This packet has spoof lol got em'
 
     p = Packet(dst)
-    p.l2 = level2.MACHeader(smac, dmac, protocols.E_IPv4)
-    p.l3 = level3.IPHeader(src, dst, protocol=protocols.ICMP)
-    p.l4 = level4.ICMPHeader(payload, type=8, seq=1)
+    # p.l2 = level2.MACHeader(smac, dmac, protocols.E_IPv4)
+    p.l3 = level3.IPHeader(src, dst, protocol=protocols.UDP)
+    # p.l4 = level4.ICMPHeader(payload, type=8, seq=1)
     # p.l4 = level4.TCPHeader(payload, src, dst, 80, 80, SYN=1)
+    p.l4 = level4.UDPHeader(payload, 37377)
     p.set_datagram(payload)
 
     print(p.compile())
-    s.send(p.compile())
-    print('ICMP echo sent.')
-    print('Response:', s.recvfrom(1024))
+    s.sendto(p.compile(), (dst, 0))
+    print('UDP packet sent.')
+    # print('Response:', s.recvfrom(1024))
 
     print('Operation complete.')

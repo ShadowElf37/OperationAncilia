@@ -86,5 +86,13 @@ class TCPHeader:
 
 
 class UDPHeader:
-    def __init__(self):
-        ...
+    def __init__(self, payload, dport, sport=0):
+        self.header = [
+            sport,
+            dport,
+            8+len(payload),
+            0  # Apparently the checksum is optional
+        ]
+
+    def compile(self):
+        return pack('!HHHH', *self.header)
