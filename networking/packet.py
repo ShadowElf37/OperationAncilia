@@ -40,6 +40,23 @@ class Packet:
         return self.dest
 
 
+class Response:
+    def __init__(self, bytes):
+        self.sender = bytes[1]
+        self.bytes = list(bytes[0])
+        i = -1
+        l = []
+        for c in self.bytes:
+            i += 1
+            if not i % 8:
+                l.append([])
+            l[-1].append(c)
+        self.bytes = l
+
+    def decode(self):
+        for i in self.bytes:
+            print(' '.join(map(lambda x: ('0' * (4-len(hex(x)))) + hex(x)[2:], i)) + '\t\t' + ''.join(map(chr, i)))
+
 if __name__ == '__main__':
     print('Initializing socket...')
     s = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_ICMP)
@@ -48,10 +65,10 @@ if __name__ == '__main__':
     # s.bind(('eth0', 0))
 
     print('Socket ready. Sending packet...')
-    src = '192.168.1.1'
+    src = '192.168.1.164'
     dst = '192.168.1.81'
-    smac = 'AC:9E:17:7D:2E:80' # 'b0:65:bd:45:c9:c8'  #
-    dmac = '7c:d1:c3:71:1c:86'
+    # smac = 'AC:9E:17:7D:2E:80' # 'b0:65:bd:45:c9:c8'  #
+    # dmac = '7c:d1:c3:71:1c:86'
     payload = 'This packet has massive spoof lol got em'
 
     for i in range(1):
@@ -67,6 +84,8 @@ if __name__ == '__main__':
         print(p.compile())
         s.sendto(p.compile(), (dst, 0))
         print('ICMP packet sent.')
-        # print('Response:', s.recvfrom(1024))
+        r = Response(s.recvfrom(1024))
+        print('Response from', r.sender, ':')
+        r.decode()
 
     print('Operation complete.')

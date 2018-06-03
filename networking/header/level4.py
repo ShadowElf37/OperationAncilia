@@ -32,7 +32,8 @@ class ICMPHeader:
         for c in self.payload:
             i += 1
             a = bin(ord(c))[2:]
-            t += '0' * (len(a)%2) + a
+            t += '0' * (8 - len(a)) + a
+            print(a)
             if i % 2 == 0:
                 l.append(t)
                 t = ''
