@@ -70,7 +70,6 @@ class AudioOutput(Throughput):
             if self.open:
                 try:
                     self.stream.write(self.buffer.pop(0))
-
                 except IndexError:
                     continue
 

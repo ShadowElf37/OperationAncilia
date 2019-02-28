@@ -43,15 +43,14 @@ class Packet:
 class Response:
     def __init__(self, bytes):
         self.sender = bytes[1]
-        self.bytes = list(bytes[0])
+        self.bytes = []
         i = -1
         l = []
-        for c in self.bytes:
+        for c in list(bytes[0]):
             i += 1
             if not i % 8:
-                l.append([])
-            l[-1].append(c)
-        self.bytes = l
+                self.bytes.append([])
+            self.bytes[-1].append(c)
 
     def decode(self):
         for i in self.bytes:
